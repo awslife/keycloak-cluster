@@ -1,0 +1,22 @@
+---
+- name: install keycloak
+  hosts: '{{ hosts | default("all") }}'
+  gather_facts: yes
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  pre_tasks:
+    - name: gather keycloak list
+      set_fact:
+        keycloak_list: "{{ groups['KEYCLOAK'] | list  }}"
+      tags:
+        - always
+  vars:
+    postgresql_jdbc_version: '{{ lookup("env","POSTGRESQL_JDBC_VERSION") }}'
+    postgresql_connection_url: '{{ lookup("env","POSTGRESQL_CONNECTION_URL") }}'
+    postgresql_username: '{{ lookup("env","POSTGRESQL_USERNAME") }}'
+    postgresql_password: '{{ lookup("env","POSTGRESQL_PASSWORD") }}'
+
+  roles:
+    - keycloak
