@@ -1,12 +1,12 @@
 [ALL]
 keycloak1 newid=168
 keycloak2 newid=169
-#keycloak3 newid=170
+keycloak3 newid=170
 
 [KEYCLOAK]
 keycloak1
 keycloak2
-#keycloak3
+keycloak3
 
 [all:vars]
 
