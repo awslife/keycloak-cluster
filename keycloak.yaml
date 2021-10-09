@@ -13,10 +13,13 @@
       tags:
         - always
   vars:
-    postgresql_jdbc_version: '{{ lookup("env","POSTGRESQL_JDBC_VERSION") }}'
     postgresql_connection_url: '{{ lookup("env","POSTGRESQL_CONNECTION_URL") }}'
     postgresql_username: '{{ lookup("env","POSTGRESQL_USERNAME") }}'
     postgresql_password: '{{ lookup("env","POSTGRESQL_PASSWORD") }}'
+
+    keycloak_mgmt_user: '{{ lookup("env","KEYCLOAK_MGMT_USER") }}'
+    keycloak_mgmt_pass: '{{ lookup("env","KEYCLOAK_MGMT_PASS") }}'
+    keycloak_mgmt_group: '{{ lookup("env","KEYCLOAK_MGMT_GROUP") }}'
 
   roles:
     - keycloak

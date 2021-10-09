@@ -80,11 +80,6 @@
         </jvm>
     </jvms>
     <servers>
-        <!--
-        <server name="load-balancer" group="load-balancer-group">
-            <jvm name="default"/>
-        </server>
-        -->
         <server name="{{ default_service_name }}" group="auth-server-group" auto-start="true">
             <jvm name="default"/>
             <socket-bindings port-offset="0"/>

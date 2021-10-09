@@ -63,10 +63,10 @@
     </domain-controller>
     <interfaces>
         <interface name="management">
-						<inet-address value="${jboss.bind.address.management:{{ ip4_pub }}}"/>
+			<inet-address value="${jboss.bind.address.management}"/>
         </interface>
         <interface name="public">
-						<inet-address value="${jboss.bind.address:{{ ip4_pub }}}"/>
+			<inet-address value="${jboss.bind.address}"/>
         </interface>
     </interfaces>
     <jvms>
@@ -80,9 +80,9 @@
         </jvm>
     </jvms>
     <servers>
-				<server name="{{ default_service_name }}" group="auth-server-group" auto-start="true">
+		<server name="{{ default_service_name }}" group="auth-server-group" auto-start="true">
             <jvm name="default"/>
-            <socket-bindings port-offset="150"/>
+            <socket-bindings port-offset="0"/>
         </server>
     </servers>
     <profile>

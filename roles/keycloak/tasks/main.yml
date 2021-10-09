@@ -6,7 +6,19 @@
     state: stopped
   ignore_errors: yes
   tags:
-    - stop_keycloak
+    - stop
+
+- name: install dependency packages
+  dnf:
+    name:
+      - wget
+      - unzip
+      - tar
+      - vim
+      - java-1.8.0-openjdk-headless
+    state: present
+  tags:
+    - init
 
 - name: delete keycloak directory
   file:
@@ -18,32 +30,19 @@
     - { path: '/opt/keycloak' }
     - { path: '/var/log/keycloak' }
   tags:
-    - init_keycloak
-
-- name: get public ip address 
-  set_fact:
-    ip4_pub: '{{ ansible_ens19.ipv4.address }}'
-    ip4_prv: '{{ ansible_ens18.ipv4.address }}'
-  tags:
-    - host_ip
+    - init
 
 - name: download keycloak
-  get_url:
-    url: https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz
-    dest: /opt/keycloak-{{ keycloak_version }}.tar.gz
-    mode: '0644'
+  #get_url:
+  #  url: https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz
+  #  dest: /opt/keycloak-{{ keycloak_version }}.tar.gz
+  #  mode: '0644'
+  shell: |
+    wget https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz -O /opt/keycloak-{{ keycloak_version }}.tar.gz
+  args:
+    warn: false
   tags:
-  - init_keycloak
-
-     #- name: copy keycloak
-     #  copy:
-     #    src: '{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz'
-     #    dest: /opt/keycloak-{{ keycloak_version }}.tar.gz
-     #    owner: root
-     #    group: root
-     #    mode: '0644'
-     #  tags:
-     #  - init_keycloak
+    - init
 
 - name: untar keycloak
   unarchive:
@@ -53,7 +52,7 @@
     group: root
     remote_src: yes
   tags:
-  - init_keycloak
+    - init
 
 - name: link keycloak
   file:
@@ -61,7 +60,7 @@
     dest: /opt/keycloak
     state: link
   tags:
-  - init_keycloak
+    - init
 
 - name: create essential directory for keycloak
   file:
@@ -75,22 +74,7 @@
     - { path: "/opt/keycloak/modules/system/layers/keycloak/org/postgresql/main" }
     - { path: "/opt/keycloak/domain/servers/{{ default_service_name }}/configuration" }
   tags:
-    - init_keycloak
-
-- name: download postgresql jdbc driver
-  get_url:
-    url: 'https://jdbc.postgresql.org/download/postgresql-{{ postgresql_jdbc_version }}.jar'
-    dest: '/opt/keycloak/modules/system/layers/keycloak/org/postgresql/main'
-    mode: '0644'
-  tags:
-    - postgresql
-
-- name: copy postgresql template
-  template:
-    src: '{{ keycloak_version }}/module-jdbc.xml.j2'
-    dest: '/opt/keycloak/modules/system/layers/keycloak/org/postgresql/main/module.xml'
-  tags:
-    - postgresql
+    - init
 
 - name: copy keycloak domain cluster master config files
   template:
@@ -100,7 +84,7 @@
     - { src: '{{ keycloak_version }}/domain.xml.j2', dest: '/opt/keycloak/domain/configuration/domain.xml' }
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - domain_cloak
+    - domain
 
 - name: copy keycloak domain cluster host config files
   template:
@@ -110,7 +94,7 @@
     - { src: '{{ keycloak_version }}/host-master.xml.j2', dest: '/opt/keycloak/domain/configuration/host-master.xml' }
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - domain_cloak
+    - domain
 
 - name: add master realm user
   shell: |
@@ -118,7 +102,8 @@
   become: yes
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - domain_user
+    - domain
+    - master_user
 
 - name: add management user
   shell: |
@@ -127,7 +112,8 @@
   register: adduser_output
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - management_user
+    - slave
+    - mgmt_user
 
 - name: parse secret value
   set_fact:
@@ -136,14 +122,16 @@
     regexp: '.*value=\"(.*)\"'
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - management_user
+    - slave
+    - mgmt_user
 
 - name: print secret_value
   debug:
     var: secret_value
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - management_user
+    - slave
+    - mgmt_user
 
 - name: register adduser output
   add_host:
@@ -151,7 +139,8 @@
     adduser_value: '{{ secret_value }}'
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - management_user
+    - slave
+    - mgmt_user
 
 - name: copy keycloak domain cluster slave config files
   template:
@@ -161,37 +150,52 @@
     - { src: '{{ keycloak_version }}/host-slave.xml.j2', dest: '/opt/keycloak/domain/configuration/host-slave.xml' }
   when: keycloak_list[0] != inventory_hostname
   tags:
-    - management_user
+    - slave
+    - mgmt_user
+
+- name: download postgresql jdbc driver
+  get_url:
+    url: 'https://jdbc.postgresql.org/download/postgresql-{{ postgresql_jdbc_version }}.jar'
+    dest: '/opt/keycloak/modules/system/layers/keycloak/org/postgresql/main'
+    mode: '0644'
+  tags:
+    - db
+
+- name: copy postgresql template
+  template:
+    src: '{{ keycloak_version }}/module-jdbc.xml.j2'
+    dest: '/opt/keycloak/modules/system/layers/keycloak/org/postgresql/main/module.xml'
+  tags:
+    - db
+
+- name: get public ip address 
+  set_fact:
+    ip4: '{{ ansible_ens18.ipv4.address }}'
+  tags:
+    - service
+    - service_master
+    - service_slave
 
 - name: register master server ip
   add_host:
     name: master_ip
-    master_value: "{{ ip4_pub }}"
+    master_value: "{{ ip4 }}"
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - keycloak_service
+    - service
+    - service_master
 
 - name: copt keycloak master service file
   template:
     src: "keycloak.service"
-    dest: "/etc/systemd/system/keycloak.service"
+    dest: "/usr/lib/systemd/system/keycloak.service"
   vars:
     host_config: "host-master.xml"
-    master_ip4pub: "{{ hostvars['master_ip']['master_value'] }}"
+    master_ip4: "{{ hostvars['master_ip']['master_value'] }}"
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - keycloak_service
-
-- name: copt keycloak slave service file
-  template:
-    src: "keycloak.service"
-    dest: "/etc/systemd/system/keycloak.service"
-  vars:
-    host_config: "host-slave.xml"
-    master_ip4pub: "{{ hostvars['master_ip']['master_value'] }}"
-  when: keycloak_list[0] != inventory_hostname
-  tags:
-    - keycloak_service
+    - service
+    - service_master
 
 - name: start master keycloak
   systemd:
@@ -200,18 +204,31 @@
     daemon_reload: yes
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - master_service
+    - service
+    - service_master
 
 - name: Waits for port 9990
   wait_for:
-    host: '{{ ansible_ens19.ipv4.address }}'
-    # host: '{{ ip4_pub }}'
+    host: '{{ ip4 }}'
     port: 9990
     delay: 3
     state: started
   when: keycloak_list[0] == inventory_hostname
   tags:
-    - master_service
+    - service
+    - service_master
+
+- name: copt keycloak slave service file
+  template:
+    src: "keycloak.service"
+    dest: "/usr/lib/systemd/system/keycloak.service"
+  vars:
+    host_config: "host-slave.xml"
+    master_ip4: "{{ hostvars['master_ip']['master_value'] }}"
+  when: keycloak_list[0] != inventory_hostname
+  tags:
+    - service
+    - service_slave
 
 - name: start slave keycloak
   systemd:
@@ -220,4 +237,5 @@
     daemon_reload: yes
   when: keycloak_list[0] != inventory_hostname
   tags:
-    - slave_service
+    - service
+    - service_slave

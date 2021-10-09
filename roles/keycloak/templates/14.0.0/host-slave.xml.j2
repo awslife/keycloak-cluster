@@ -62,7 +62,7 @@
         </management-interfaces>
     </management>
     <domain-controller>
-        <remote security-realm="ManagementRealm" username="{{ keycloak_mgmt_user }}" >
+        <remote security-realm="ManagementRealm" username="{{ keycloak_mgmt_user }}">
             <discovery-options>
                 <static-discovery name="primary" protocol="${jboss.domain.master.protocol:remote+http}" host="${jboss.domain.master.address}" port="${jboss.domain.master.port:9990}"/>
             </discovery-options>

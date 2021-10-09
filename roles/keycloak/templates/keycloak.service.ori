@@ -3,9 +3,9 @@ Description=The Keycloak Server
 After=syslog.target network.target
 
 [Service]
-Environment=BIND_ADDRESS="-Djboss.bind.address.management={{ ip4 }} -Djboss.bind.address.private={{ ip4 }} -Djboss.bind.address={{ ip4 }}"
+Environment=BIND_ADDRESS="-Djboss.bind.address.management={{ ip4_pub }} -Djboss.bind.address.private={{ ip4_pub }} -Djboss.bind.address={{ ip4_pub }}"
 Environment=LOG_DIR="-Djboss.server.log.dir=/var/log/keycloak -Djboss.domain.log.dir=/var/log/keycloak"
-Environment=MASTER_ADDRESS="-Djboss.domain.master.address={{ master_ip4 }}"
+Environment=MASTER_ADDRESS="-Djboss.domain.master.address={{ master_ip4pub }}"
 LimitNOFILE=102642
 PIDFile=/var/run/keycloak/keycloak.pid
 ExecStart=/opt/keycloak/bin/domain.sh --host-config={{ host_config }} $BIND_ADDRESS $LOG_DIR $MASTER_ADDRESS
