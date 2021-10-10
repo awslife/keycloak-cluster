@@ -29,14 +29,11 @@
     - { path: '/opt/keycloak-{{ keycloak_version }}' }
     - { path: '/opt/keycloak' }
     - { path: '/var/log/keycloak' }
+    - { path: '/data1/keycloak' }
   tags:
     - init
 
 - name: download keycloak
-  #get_url:
-  #  url: https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz
-  #  dest: /opt/keycloak-{{ keycloak_version }}.tar.gz
-  #  mode: '0644'
   shell: |
     wget https://github.com/keycloak/keycloak/releases/download/{{ keycloak_version }}/keycloak-{{ keycloak_version }}.tar.gz -O /opt/keycloak-{{ keycloak_version }}.tar.gz
   args:
@@ -96,9 +93,26 @@
   tags:
     - domain
 
+- name: create domain config directory
+  file:
+    path: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+  with_items:
+    - { path: "/data1/keycloak/domain/temp" }
+    - { path: "/data1/keycloak/domain/log" }
+    - { path: "/data1/keycloak/domain/data" }
+    - { path: "/data1/keycloak/domain/servers/{{ default_service_name }}/configuration" }
+  when: keycloak_list[0] == inventory_hostname
+  tags:
+    - domain
+    - domain_config
+
 - name: add master realm user
   shell: |
-    /opt/keycloak/bin/add-user-keycloak.sh --domain --dc /opt/keycloak/domain/servers/{{ default_service_name }}/configuration --realm master --user {{ keycloak_mgmt_user }} --password {{ keycloak_mgmt_pass }}
+    /opt/keycloak/bin/add-user-keycloak.sh --domain --dc /data1/keycloak/domain/servers/{{ default_service_name }}/configuration --realm master --user {{ keycloak_mgmt_user }} --password {{ keycloak_mgmt_pass }}
   become: yes
   when: keycloak_list[0] == inventory_hostname
   tags:
@@ -187,7 +201,7 @@
 
 - name: copt keycloak master service file
   template:
-    src: "keycloak.service"
+    src: "keycloak-master.service"
     dest: "/usr/lib/systemd/system/keycloak.service"
   vars:
     host_config: "host-master.xml"
@@ -220,7 +234,7 @@
 
 - name: copt keycloak slave service file
   template:
-    src: "keycloak.service"
+    src: "keycloak-slave.service"
     dest: "/usr/lib/systemd/system/keycloak.service"
   vars:
     host_config: "host-slave.xml"

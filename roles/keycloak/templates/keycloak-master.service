@@ -1,0 +1,16 @@
+[Unit]
+Description=The Keycloak Server
+After=syslog.target network.target
+
+[Service]
+Environment=BIND_ADDRESS="-Djboss.bind.address.management={{ ip4 }} -Djboss.bind.address.private={{ ip4 }} -Djboss.bind.address={{ ip4 }}"
+Environment=LOG_DIR="-Djboss.server.log.dir=/var/log/keycloak -Djboss.domain.log.dir=/var/log/keycloak"
+Environment=MASTER_ADDRESS="-Djboss.domain.master.address={{ master_ip4 }}"
+Environment=DOMAIN_CONF="-Djboss.domain.temp.dir=/data1/keycloak/domain/temp -Djboss.domain.log.dir=/data1/keycloak/domain/log -Djboss.domain.data.dir=/data1/keycloak/domain/data -Djboss.domain.servers.dir=/data1/keycloak/domain/servers"
+LimitNOFILE=102642
+PIDFile=/var/run/keycloak/keycloak.pid
+ExecStart=/opt/keycloak/bin/domain.sh --host-config={{ host_config }} $BIND_ADDRESS $LOG_DIR $MASTER_ADDRESS $DOMAIN_CONF
+StandardOutput=null
+
+[Install]
+WantedBy=multi-user.target
