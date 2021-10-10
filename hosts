@@ -12,5 +12,6 @@ keycloak3
 
 [KEYCLOAK:vars]
 default_service_name=homelab
+default_domain_path=/data1/keycloak/domain
 keycloak_version=15.0.2
 postgresql_jdbc_version=42.2.22

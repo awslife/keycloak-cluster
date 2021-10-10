@@ -29,7 +29,7 @@
     - { path: '/opt/keycloak-{{ keycloak_version }}' }
     - { path: '/opt/keycloak' }
     - { path: '/var/log/keycloak' }
-    - { path: '/data1/keycloak' }
+    - { path: '{{ default_domain_path }}' }
   tags:
     - init
 
@@ -101,10 +101,10 @@
     mode: "0755"
     state: directory
   with_items:
-    - { path: "/data1/keycloak/domain/temp" }
-    - { path: "/data1/keycloak/domain/log" }
-    - { path: "/data1/keycloak/domain/data" }
-    - { path: "/data1/keycloak/domain/servers/{{ default_service_name }}/configuration" }
+    - { path: "{{ default_domain_path }}/temp" }
+    - { path: "{{ default_domain_path }}/log" }
+    - { path: "{{ default_domain_path }}/data" }
+    - { path: "{{ default_domain_path }}/servers/{{ default_service_name }}/configuration" }
   when: keycloak_list[0] == inventory_hostname
   tags:
     - domain
@@ -112,7 +112,7 @@
 
 - name: add master realm user
   shell: |
-    /opt/keycloak/bin/add-user-keycloak.sh --domain --dc /data1/keycloak/domain/servers/{{ default_service_name }}/configuration --realm master --user {{ keycloak_mgmt_user }} --password {{ keycloak_mgmt_pass }}
+    /opt/keycloak/bin/add-user-keycloak.sh --domain --dc {{ default_domain_path }}/servers/{{ default_service_name }}/configuration --realm master --user {{ keycloak_mgmt_user }} --password {{ keycloak_mgmt_pass }}
   become: yes
   when: keycloak_list[0] == inventory_hostname
   tags:
